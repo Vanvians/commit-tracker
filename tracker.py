@@ -1,5 +1,8 @@
+import subprocess
+
+
 #Main
-if _name__ == "__main__":
+if __name__ == "__main__":
     repo_path = input(" Please enter the path to your Git repository here:").strip()
 
     output_1(repo_path)
@@ -10,7 +13,21 @@ if _name__ == "__main__":
 
 #Run Git
 
+def run_git_commands(repo_path, commands):
+    result = subprocess.run(
+        ["git"] + commands,
+        cwd = repo_path,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE,
+        text = True
+    )
+    return result.stdout.strip()
+
 #collect commit hashes
+
+def collect_commit_hashes(repo_path):
+    commits = run_git_commands(repo_path, ["log", "--pretty=format:%H", "--reverse"])
+    return commits.split("\n") if output else []
 
 #List all files in a commit
 
