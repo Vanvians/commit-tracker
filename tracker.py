@@ -35,9 +35,10 @@ def find_file_changes(repo_path, old, new):
     for line in changes.split("\n"):
         if line.strip():
             parts = line.split("\t")
-            status = parts[0]
-            path = parts[1]
-            changes.append((status, path))
+            if len(parts) < 2:
+                status = parts[0]
+                path = parts[1]
+                change_list.append((status, path))
     return change_list
 
 #Get list of all commits that modified a single file
@@ -48,7 +49,22 @@ def get_file_commit_history(repo_path, file_path):
 
 #Compute churn 
 
-#Count unuique contributors to a file
+def compute_churn(repo_path, commit_hash, file_path):
+    result = run_git_commands(repo_path, ["show", "--numstat", commit_hash, "--" , file_path])
+
+    for line in result.split("\n"):
+        parts = line.split("\t")
+        if len(parts) == 3 and parts[2] == file_path:
+            added, deleted = parts[0], parts[1]
+            if added.isdigit() and deleted.isdigit():
+                return int(added) + int(deleted)
+            
+            
+
+#Count unique contributors to a file
+
+def count_unique_contributors(repo_path, file_path):
+
 
 #Generate output_1.txt
 
@@ -77,6 +93,37 @@ def output_1(repo_path):
     print("output_1.txt generated successfully.")
 
 #Generate output_2.csv
+
+def output_2(repo_path):
+    last_commit = run_git_commands(repo_path, ["rev-parse", "master"])
+
+    files = list_files_in_commit(repo_path, last_commit)
+
+    with open("output_2.csv", "w", newline = " ") as f: 
+        writer = csv.writer(f)
+        writer.writerow(["File name", "File path", " Commit count", "Average Churn", "Unique contributors"])
+
+        for file_path in files:
+            commit_count_list = get_file_commit_history(repo_path, file_path)
+            commit_count = len(commit_count_list)
+
+            churn_values = []
+            contributor_number = []
+
+            for commit in commit_count_list:
+                churn_values.append(
+                    compute_churn(repo_path, commit, file_path)
+                )
+                contributor_number.append(
+                    count_unique_contributors(repo_path, file_path)
+                )
+
+            average_churn = sum(churn_values) / len(churn_values) if churn_values else 0
+            avg_contributors = sum(contributor_number) / len(contributor_number) if contributor_number else 0
+
+            writer.writerow([file_path.split("|")[-1], file_path, commit_count, f"{average_churn:.2f}", f"{avg_contributors:.2f}"])
+    print("output_2.csv generated successfully.")
+
 
 #Main
 if __name__ == "__main__":
