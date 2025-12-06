@@ -35,7 +35,7 @@ def find_file_changes(repo_path, old, new):
     for line in changes.split("\n"):
         if line.strip():
             parts = line.split("\t")
-            if len(parts) < 2:
+            if len(parts) >= 2:
                 status = parts[0]
                 path = parts[1]
                 change_list.append((status, path))
@@ -58,12 +58,25 @@ def compute_churn(repo_path, commit_hash, file_path):
             added, deleted = parts[0], parts[1]
             if added.isdigit() and deleted.isdigit():
                 return int(added) + int(deleted)
-            
+    return 0
             
 
 #Count unique contributors to a file
 
-def count_unique_contributors(repo_path, file_path):
+def count_unique_contributors(repo_path, commit_hash,file_path):
+    result = run_git_commands(repo_path, ["blame", commit_hash, "--", file_path])
+
+    contributors = set()
+
+    pattern = r"\(([^()]+?)\s+\d{4}-"
+
+    for line in result.split("\n"):
+        match = re.match(pattern, line)
+        if match:
+            name = match.group(1).strip()
+            contributors.add(name)
+
+    return len(contributors)
 
 
 #Generate output_1.txt
@@ -83,7 +96,7 @@ def output_1(repo_path):
             modified = [p for s, p in changes if s == "M"]
 
             if added:
-                f.write(f"Commit #: {new_commit} Addes files:\n")
+                f.write(f"Commit #: {new_commit} Added files:\n")
             if deleted:
                 f.write(f"Commit #: {new_commit} Deleted files:\n")
             if modified:
@@ -99,7 +112,7 @@ def output_2(repo_path):
 
     files = list_files_in_commit(repo_path, last_commit)
 
-    with open("output_2.csv", "w", newline = " ") as f: 
+    with open("output_2.csv", "w", newline = "") as f: 
         writer = csv.writer(f)
         writer.writerow(["File name", "File path", " Commit count", "Average Churn", "Unique contributors"])
 
