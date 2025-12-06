@@ -1,3 +1,4 @@
 File name,File path,Commit count,Average Churn,Unique contributors
-file1.txt,file1.txt,2           ,0.00         ,0.00               
-file3.c  ,file3.c  ,1           ,2.00         ,0.00               
+file1.txt,file1.txt,3           ,0.00         ,1.00               
+file3.c  ,file3.c  ,2           ,2.00         ,1.00               
+file4.py ,file4.py ,2           ,0.50         ,0.50               

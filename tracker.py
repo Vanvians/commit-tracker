@@ -63,7 +63,7 @@ def compute_churn(repo_path, commit_hash, file_path):
 
 #Count unique contributors to a file
 
-def count_unique_contributors(repo_path, commit_hash,file_path):
+def count_unique_contributors(repo_path, commit_hash, file_path):
     result = run_git_commands(repo_path, ["blame", commit_hash, "--", file_path])
 
     contributors = set()
@@ -71,10 +71,11 @@ def count_unique_contributors(repo_path, commit_hash,file_path):
     pattern = r"\(([^()]+?)\s+\d{4}-"
 
     for line in result.split("\n"):
-        match = re.match(pattern, line)
+        match = re.search(pattern, line)
         if match:
             name = match.group(1).strip()
             contributors.add(name)
+
 
     return len(contributors)
 
