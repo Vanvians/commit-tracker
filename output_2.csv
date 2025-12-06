@@ -1,1 +1,3 @@
-File name,File path, Commit count,Average Churn,Unique contributors
+File name,File path,Commit count,Average Churn,Unique contributors
+file1.txt,file1.txt,2           ,0.00         ,0.00               
+file3.c  ,file3.c  ,1           ,2.00         ,0.00               

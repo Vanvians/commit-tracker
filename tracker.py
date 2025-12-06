@@ -24,7 +24,7 @@ def collect_commit_hashes(repo_path):
 #List all files in a commit
 
 def list_files_in_commit(repo_path, commit_hash):
-    files = run_git_commands(repo_path, ["ls-tree", "--name-only", "r", commit_hash])
+    files = run_git_commands(repo_path, ["ls-tree", "-r", "--name-only", commit_hash])
     return files.split("\n") if files else []
 
 #Find added/deleted/modified files
@@ -97,10 +97,16 @@ def output_1(repo_path):
 
             if added:
                 f.write(f"Commit #: {new_commit} Added files:\n")
+                for file in added:
+                    f.write(f"  {file}\n")
             if deleted:
                 f.write(f"Commit #: {new_commit} Deleted files:\n")
+                for file in deleted:
+                    f.write(f"  {file}\n")
             if modified:
                 f.write(f"Commit #: {new_commit} Modified files:\n")
+                for file in modified:
+                    f.write(f"  {file}\n")
             
             f.write("\n")
     print("output_1.txt generated successfully.")
@@ -112,29 +118,43 @@ def output_2(repo_path):
 
     files = list_files_in_commit(repo_path, last_commit)
 
+    # Collect all data first
+    data = []
+    for file_path in files:
+        commit_count_list = get_file_commit_history(repo_path, file_path)
+        commit_count = len(commit_count_list)
+
+        churn_values = []
+        contributor_number = []
+
+        for commit in commit_count_list:
+            churn_values.append(
+                compute_churn(repo_path, commit, file_path)
+            )
+            contributor_number.append(
+                count_unique_contributors(repo_path, commit, file_path)
+            )
+
+        average_churn = sum(churn_values) / len(churn_values) if churn_values else 0
+        avg_contributors = sum(contributor_number) / len(contributor_number) if contributor_number else 0
+
+        data.append([file_path.split("/")[-1], file_path, str(commit_count), f"{average_churn:.2f}", f"{avg_contributors:.2f}"])
+
+    # Calculate column widths
+    headers = ["File name", "File path", "Commit count", "Average Churn", "Unique contributors"]
+    col_widths = [max(len(str(headers[i])), max(len(row[i]) for row in data)) if data else len(headers[i]) for i in range(5)]
+
     with open("output_2.csv", "w", newline = "") as f: 
         writer = csv.writer(f)
-        writer.writerow(["File name", "File path", " Commit count", "Average Churn", "Unique contributors"])
+        # Write padded header
+        padded_header = [headers[i].ljust(col_widths[i]) for i in range(5)]
+        writer.writerow(padded_header)
 
-        for file_path in files:
-            commit_count_list = get_file_commit_history(repo_path, file_path)
-            commit_count = len(commit_count_list)
+        # Write padded data
+        for row in data:
+            padded_row = [row[i].ljust(col_widths[i]) for i in range(5)]
+            writer.writerow(padded_row)
 
-            churn_values = []
-            contributor_number = []
-
-            for commit in commit_count_list:
-                churn_values.append(
-                    compute_churn(repo_path, commit, file_path)
-                )
-                contributor_number.append(
-                    count_unique_contributors(repo_path, file_path)
-                )
-
-            average_churn = sum(churn_values) / len(churn_values) if churn_values else 0
-            avg_contributors = sum(contributor_number) / len(contributor_number) if contributor_number else 0
-
-            writer.writerow([file_path.split("|")[-1], file_path, commit_count, f"{average_churn:.2f}", f"{avg_contributors:.2f}"])
     print("output_2.csv generated successfully.")
 
 
